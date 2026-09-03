@@ -8,15 +8,45 @@ function Splash() {
   const [serverError, setServerError] = useState("");
   const navigate = useNavigate();
 
-  function handleLogin(formData) {
-    sse
-    console.log("Login submitted:", formData);
-    navigate("/home");
+  async function handleLogin(formData) {
+    setServerError("");
+    try {
+      const response = await fetch("http://localhost:3000/api/signin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Sign-in failed.");
+      }
+
+      const data = await response.json();
+      console.log("Server responded:", data);
+      navigate("/home");
+    } catch (err) {
+      setServerError(err.message);
+    }
   }
 
-  function handleSignup(formData) {
-    console.log("Signup submitted:", formData);
-    navigate("/home");
+  async function handleSignup(formData) {
+    setServerError("");
+    try {
+      const response = await fetch("http://localhost:3000/api/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Sign-up failed.");
+      }
+      const data = await response.json();
+      console.log("Server responded:", data);
+      navigate("/home");
+    } catch (err) {
+      setServerError(err.message);
+    }
   }
 
   return (
@@ -39,6 +69,8 @@ function Splash() {
             Sign up
           </button>
         </div>
+
+        {serverError && <p className="error-text">{serverError}</p>}
 
         {activeTab === "login" ? (
           <LoginForm onLogin={handleLogin} />
