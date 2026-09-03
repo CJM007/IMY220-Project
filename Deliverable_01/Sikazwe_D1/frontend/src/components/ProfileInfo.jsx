@@ -1,4 +1,4 @@
-function ProfileInfo({ user, onEditClick }) {
+function ProfileInfo({ user, isOwner, onEditClick }) {
   return (
     <div className="profile-info">
       <img src={user.profilePic} alt={user.name} />
@@ -8,7 +8,7 @@ function ProfileInfo({ user, onEditClick }) {
           @{user.username} · {user.pronouns}
         </p>
         <p>{user.bio}</p>
-        <button onClick={onEditClick}>Edit profile</button>
+        {isOwner && <button onClick={onEditClick}>Edit profile</button>}
       </div>
     </div>
   );

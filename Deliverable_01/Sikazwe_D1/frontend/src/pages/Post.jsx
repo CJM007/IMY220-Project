@@ -14,7 +14,7 @@ function Post() {
   useEffect(() => {
     const found = dummyPosts.find((p) => p.id === Number(id)) || dummyPosts[0];
     setPost(found);
-  });
+  }, [id]);
 
   function handleUpdate(updatedFields) {
     setPost((prev) => ({ ...prev, ...updatedFields }));

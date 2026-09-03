@@ -19,7 +19,7 @@ function EditProfile({ user, onSave, onCancel }) {
 
   return (
     <form onSubmit={handleSubmit} className="edit-profile-form">
-      <label htmlfor="name">Name</label>
+      <label htmlFor="name">Name</label>
       <input
         id="name"
         name="name"

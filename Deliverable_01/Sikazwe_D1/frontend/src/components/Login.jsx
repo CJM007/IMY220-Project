@@ -48,7 +48,7 @@ function LoginForm({ onLogin }) {
           value={formData.email}
           onChange={handleChange}
         />
-        {errors.email && <p className="eror-text">{errors.email}</p>}
+        {errors.email && <p className="error-text">{errors.email}</p>}
       </div>
 
       <div className="field">

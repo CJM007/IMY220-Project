@@ -11,7 +11,10 @@ function PostPreview({ post }) {
       </Link>
       <div>
         <p>
-          <strong>{post.username}</strong> finsished reading{" "}
+          <Link to={`/profile/${post.userId}`}>
+            <strong>{post.username}</strong>
+          </Link>{" "}
+          finished reading{" "}
           <Link to={`/post/${post.id}`}>{post.bookTitle}</Link>
         </p>
         <p>{post.description}</p>

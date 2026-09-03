@@ -1,6 +1,7 @@
 export const dummyPosts = [
   {
     id: 1,
+    userId: 1,
     username: "chitambala",
     bookTitle: "The Salt Path",
     author: "Raynor Winn",
@@ -12,12 +13,14 @@ export const dummyPosts = [
     comments: [
       {
         id: 1,
+        userId: 2,
         username: "lerato",
         text: "Adding this to my list!",
         createdAt: "2026-08-28T11:00:00Z",
       },
       {
         id: 2,
+        userId: 3,
         username: "tumelo",
         text: "One of my favourites this year.",
         createdAt: "2026-08-28T15:20:00Z",
@@ -26,6 +29,7 @@ export const dummyPosts = [
   },
   {
     id: 2,
+    userId: 2,
     username: "lerato",
     bookTitle: "Piranesi",
     author: "Susanna Clarke",
@@ -37,6 +41,7 @@ export const dummyPosts = [
     comments: [
       {
         id: 3,
+        userId: 1,
         username: "chitambala",
         text: "Been meaning to read this.",
         createdAt: "2026-08-27T16:00:00Z",
@@ -45,6 +50,7 @@ export const dummyPosts = [
   },
   {
     id: 3,
+    userId: 1,
     username: "chitambala",
     bookTitle: "Sapiens",
     author: "Yuval Noah Harari",
