@@ -5,9 +5,11 @@ import SignupForm from "../components/SignupForm";
 
 function Splash() {
   const [activeTab, setActiveTab] = useState("login");
+  const [serverError, setServerError] = useState("");
   const navigate = useNavigate();
 
   function handleLogin(formData) {
+    sse
     console.log("Login submitted:", formData);
     navigate("/home");
   }
