@@ -1,12 +1,10 @@
 Dog-Eared — IMY220 Deliverable 2
 ==================================
 
-GitHub repository: <PASTE YOUR GITHUB REPO LINK HERE>
+GitHub repository: https://github.com/CJM007/IMY220-Project
 
-MongoDB Atlas connection string:
-<PASTE YOUR MONGO_URI HERE — the same one from backend/.env>
-(Make sure Atlas Network Access allows 0.0.0.0/0 so markers can connect.)
-
+MongoDB Atlas connection string: 
+See backend/.env
 
 SETUP — before running for the first time
 ------------------------------------------
@@ -34,7 +32,7 @@ HOW TO BUILD AND RUN WITH DOCKER
      docker run -p 3000:3000 --env-file .env dogeared-backend
 
    NOTE: --env-file .env is required. The .env file is intentionally not
-   copied into the Docker image (see backend/.dockerignore) because it
+   copied into the Docker image or public Github repo (see backend/.dockerignore) because it
    holds the real database password and the repo is public — it's passed
    in at container-start time instead, the same way the connection string
    itself should never be hardcoded in source.
