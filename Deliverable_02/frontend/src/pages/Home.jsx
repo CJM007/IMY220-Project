@@ -1,57 +1,115 @@
-import { useState, useEffect } from "react";
-import Feed from "../components/Feed";
-import SearchInput from "../components/SearchInput";
-import { getLocalFeed, getAllPosts, getCurrentUser } from "../api";
+import { useEffect, useState } from "react";
+import { getFeed, getHiddenPosts } from "../api.js";
+import CreatePost from "../components/CreatePost.jsx";
+import PostPreview from "../components/PostPreview.jsx";
 
-function Home() {
-  const currentUser = getCurrentUser();
-  const [feedType, setFeedType] = useState("local");
+export default function Home() {
+  const [scope, setScope] = useState("global");
+  const [sort, setSort] = useState("newest");
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [showHidden, setShowHidden] = useState(false);
+  const [hiddenPosts, setHiddenPosts] = useState([]);
 
   useEffect(() => {
-    if (!currentUser) return;
-
+    let active = true;
     setLoading(true);
-    setError("");
+    getFeed({ scope, sort })
+      .then((data) => {
+        if (active) setPosts(data.posts);
+      })
+      .catch((err) => active && setError(err.message))
+      .finally(() => active && setLoading(false));
+    return () => {
+      active = false;
+    };
+  }, [scope, sort]);
 
-    const request =
-      feedType === "local"
-        ? getLocalFeed([currentUser._id, ...currentUser.friends])
-        : getAllPosts();
+  async function loadHidden() {
+    try {
+      const data = await getHiddenPosts();
+      setHiddenPosts(data.posts);
+      setShowHidden(true);
+    } catch (err) {
+      setError(err.message);
+    }
+  }
 
-    request
-      .then((fetchedPosts) => setPosts(fetchedPosts))
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, [feedType]);
+  function handleCreated(post) {
+    setPosts((p) => [post, ...p]);
+  }
 
   return (
     <div>
-      <h1>Home</h1>
-      <SearchInput />
+      <CreatePost onCreated={handleCreated} />
 
-      <div className="feed-tabs">
-        <button
-          className={feedType === "local" ? "active" : ""}
-          onClick={() => setFeedType("local")}
+      <div className="flex flex-wrap items-center gap-3 mb-4">
+        <div className="flex rounded-lg overflow-hidden border border-border dark:border-borderdark">
+          <button
+            className={`px-3 py-1 text-sm ${scope === "local" ? "bg-rust text-paper" : "bg-cardbg dark:bg-cardbgdark"}`}
+            onClick={() => setScope("local")}
+          >
+            Friends
+          </button>
+          <button
+            className={`px-3 py-1 text-sm ${scope === "global" ? "bg-rust text-paper" : "bg-cardbg dark:bg-cardbgdark"}`}
+            onClick={() => setScope("global")}
+          >
+            Everyone
+          </button>
+        </div>
+
+        <select
+          className="input-field w-auto"
+          value={sort}
+          onChange={(e) => setSort(e.target.value)}
+          aria-label="Sort posts"
         >
-          My Shelf (friends)
-        </button>
-        <button
-          className={feedType === "global" ? "active" : ""}
-          onClick={() => setFeedType("global")}
-        >
-          Explore (everyone)
+          <option value="newest">Newest first</option>
+          <option value="mostCommented">Most commented this week</option>
+        </select>
+
+        <button className="btn-secondary text-sm" onClick={loadHidden}>
+          View hidden/reported posts
         </button>
       </div>
 
-      {loading && <p>Loading feed...</p>}
       {error && <p className="error-text">{error}</p>}
-      {!loading && !error && <Feed posts={posts} />}
+
+      {showHidden && (
+        <div className="card mb-4">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="font-heading">Hidden posts (reported more than twice)</h3>
+            <button className="text-sm text-inksoft dark:text-inksoftdark" onClick={() => setShowHidden(false)}>
+              Close ✕
+            </button>
+          </div>
+          {hiddenPosts.length === 0 ? (
+            <p className="text-sm text-inksoft dark:text-inksoftdark">No hidden posts right now.</p>
+          ) : (
+            <div className="grid sm:grid-cols-2 gap-4">
+              {hiddenPosts.map((post) => (
+                <PostPreview key={post._id} post={post} author={post.author} />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {loading ? (
+        <p>Loading feed...</p>
+      ) : posts.length === 0 ? (
+        <p className="text-inksoft dark:text-inksoftdark">
+          Nothing here yet. {scope === "local" ? "Add some friends or switch to Everyone." : "Be the first to post!"}
+        </p>
+      ) : (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {posts.map((post) => (
+            <PostPreview key={post._id} post={post} author={post.author} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
-
-export default Home;

@@ -2,282 +2,53 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ==========================================================================
-   Dog-Eared — Tailwind-based styling
-   Colours and fonts are defined once in tailwind.config.js and consumed
-   here via @apply, so every component class below is built entirely out
-   of Tailwind utilities rather than hand-written CSS values. This keeps
-   JSX free of long utility-class strings while still being "implemented
-   with Tailwind" in substance, not just name.
-   ========================================================================== */
-
 @layer base {
+  html {
+    font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  }
   body {
-    @apply bg-paper text-ink font-body text-base leading-relaxed m-0;
+    @apply bg-paper text-ink transition-colors duration-200;
   }
-
-  h1,
-  h2,
-  h3 {
-    @apply font-heading text-ink m-0 mb-2;
+  :root.dark body {
+    @apply bg-paperdark text-inkdark;
   }
-
-  h1 {
-    @apply text-3xl;
+  h1, h2, h3, h4 {
+    @apply font-heading;
   }
-
-  h2 {
-    @apply text-xl border-b-2 border-border pb-1.5 mt-8;
-  }
-
-  p {
-    @apply m-0 mb-3;
-  }
-
   a {
-    @apply text-rust no-underline hover:underline;
+    @apply text-rust hover:underline;
   }
-
-  img {
-    @apply max-w-full block;
-  }
-
-  button {
-    @apply font-body text-sm px-4 py-2 rounded border-2 border-ink bg-white text-ink cursor-pointer hover:bg-paper;
-  }
-
-  button[type="submit"] {
-    @apply bg-rust border-rust text-white font-bold hover:bg-rustdark hover:border-rustdark;
-  }
-
-  label {
-    @apply block text-xs font-bold text-inksoft mb-1;
-  }
-
-  input,
-  textarea,
-  select {
-    @apply font-body text-base px-3 py-2 border-2 border-border rounded bg-white text-ink w-full focus:outline-none focus:border-rust;
-  }
-
-  textarea {
-    @apply min-h-[90px] resize-y;
+  .dark a {
+    @apply text-rust;
   }
 }
 
 @layer components {
-  /* ---------- forms ---------- */
-  form {
-    @apply flex flex-col gap-3.5 max-w-md;
+  .card {
+    @apply bg-cardbg dark:bg-cardbgdark border border-border dark:border-borderdark rounded-xl shadow-sm p-4;
   }
-
-  .field {
-    @apply flex flex-col gap-1;
+  .btn {
+    @apply inline-flex items-center justify-center rounded-lg px-4 py-2 font-body font-semibold transition-colors;
   }
-
+  .btn-primary {
+    @apply btn bg-rust text-paper hover:bg-rustdark;
+  }
+  .btn-secondary {
+    @apply btn bg-transparent border border-border dark:border-borderdark text-ink dark:text-inkdark hover:bg-border/30;
+  }
+  .btn-danger {
+    @apply btn bg-error text-paper hover:bg-rustdark;
+  }
+  .input-field {
+    @apply w-full rounded-lg border border-border dark:border-borderdark bg-cardbg dark:bg-cardbgdark px-3 py-2 text-ink dark:text-inkdark placeholder:text-inksoft dark:placeholder:text-inksoftdark focus:outline-none focus:ring-2 focus:ring-rust;
+  }
+  .label {
+    @apply block text-sm font-semibold text-inksoft dark:text-inksoftdark mb-1;
+  }
   .error-text {
-    @apply text-error text-sm m-0;
+    @apply text-error text-sm mt-1;
   }
-
-  /* ---------- navigation ---------- */
-  nav {
-    @apply flex items-center gap-6 px-8 py-4 bg-cardbg border-b-[3px] border-ink flex-wrap;
-  }
-
-  nav a:first-child {
-    @apply font-heading text-2xl font-bold text-ink mr-auto hover:no-underline hover:text-rust;
-  }
-
-  nav a {
-    @apply text-inksoft font-bold hover:text-rust hover:no-underline;
-  }
-
-  nav button {
-    @apply ml-2;
-  }
-
-  main {
-    @apply max-w-3xl mx-auto px-8 py-6 pb-16;
-  }
-
-  /* ---------- splash page ---------- */
-  .splash-page {
-    @apply max-w-md mx-auto my-16 text-center px-6;
-  }
-
-  .splash-page h1 {
-    @apply text-4xl;
-  }
-
-  .auth-card {
-    @apply bg-cardbg border-2 border-border rounded-lg p-6 mt-6 text-left;
-  }
-
-  .auth-card form {
-    @apply max-w-none;
-  }
-
-  .tabs,
-  .feed-tabs {
-    @apply flex gap-2 mb-5;
-  }
-
-  .tabs button,
-  .feed-tabs button {
-    @apply flex-1 border-border;
-  }
-
-  .tabs button.active,
-  .feed-tabs button.active {
-    @apply bg-ink border-ink text-white;
-  }
-
-  /* ---------- feed + post preview cards ---------- */
-  .feed,
-  .user-posts {
-    @apply flex flex-col gap-5;
-  }
-
-  .post-preview {
-    @apply flex gap-4 bg-cardbg border-2 border-border rounded-lg p-4;
-  }
-
-  .post-preview-hidden {
-    @apply flex-col items-center text-center gap-2;
-  }
-
-  .post-preview img {
-    @apply w-[100px] h-[130px] object-cover rounded border-2 border-ink;
-  }
-
-  .post-preview span,
-  .post-detail-info span,
-  .album-preview span {
-    @apply inline-block bg-paper border border-gold text-olive rounded-full px-2.5 py-0.5 text-xs mr-1.5 mt-1;
-  }
-
-  /* ---------- profile page ---------- */
-  .profile-info {
-    @apply flex gap-5 items-start bg-cardbg border-2 border-border rounded-lg p-5 mb-2;
-  }
-
-  .profile-info img {
-    @apply w-[100px] h-[100px] rounded-full border-[3px] border-ink object-cover;
-  }
-
-  .profile-preview {
-    @apply flex items-center gap-3 text-ink;
-  }
-
-  .profile-preview img {
-    @apply w-12 h-12 rounded-full border-2 border-ink object-cover;
-  }
-
-  .profile-preview p {
-    @apply m-0;
-  }
-
-  .friend-item {
-    @apply flex items-center justify-between gap-3 py-2.5 border-b border-border;
-  }
-
-  /* ---------- post detail page ---------- */
-  .post-detail {
-    @apply flex gap-6 mb-8 flex-wrap;
-  }
-
-  .post-image {
-    @apply w-60 h-80 object-cover rounded-lg border-[3px] border-ink shrink-0;
-  }
-
-  .post-detail-info {
-    @apply flex-1 min-w-[240px];
-  }
-
-  .owner-actions {
-    @apply flex gap-2.5 mt-4 flex-wrap;
-  }
-
-  /* ---------- comments ---------- */
-  .comments {
-    @apply border-t-2 border-border pt-5;
-  }
-
-  .comment {
-    @apply py-2.5 border-b border-border;
-  }
-
-  .comment strong {
-    @apply mr-2;
-  }
-
-  .comment span {
-    @apply text-xs text-inksoft;
-  }
-
-  .comments form {
-    @apply flex-row items-end max-w-none mt-4 gap-2.5;
-  }
-
-  .comments .field {
-    @apply flex-1;
-  }
-
-  /* ---------- report form ---------- */
-  .report-form {
-    @apply max-w-sm mt-2;
-  }
-
-  /* ---------- albums ---------- */
-  .album-grid {
-    @apply grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4;
-  }
-
-  .album-preview {
-    @apply block bg-cardbg border-2 border-border rounded-lg p-4 hover:no-underline hover:border-rust;
-  }
-
-  .album-header {
-    @apply bg-cardbg border-2 border-border rounded-lg p-5 mb-2;
-  }
-
-  .add-to-album-form {
-    @apply flex-row items-end gap-2.5 max-w-none mt-4;
-  }
-
-  .add-to-album-form .field,
-  .add-to-album-form select {
-    @apply flex-1;
-  }
-
-  /* ---------- search ---------- */
-  .search-form {
-    @apply flex-row items-end gap-2.5 max-w-none mb-4;
-  }
-
-  .search-form .field,
-  .search-form input {
-    @apply flex-1;
-  }
-}
-
-/* ---------- responsive: a couple of breakpoints beyond Tailwind's defaults
-   specifically for the two-column layouts that need to stack on mobile ---------- */
-@media (max-width: 700px) {
-  .post-preview,
-  .post-detail {
-    flex-direction: column;
-  }
-
-  .post-preview img,
-  .post-image {
-    width: 100%;
-    height: 200px;
-  }
-
-  .profile-info {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
+  .hashtag {
+    @apply text-olive hover:text-rust font-semibold;
   }
 }

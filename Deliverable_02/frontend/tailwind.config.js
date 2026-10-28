@@ -1,29 +1,29 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: "class",
   content: ["./index.html", "./src/**/*.{js,jsx}"],
   theme: {
     extend: {
       colors: {
-        paper: "#f5e8d3",
-        cardbg: "#fffaf0",
-        ink: "#3a2415",
-        inksoft: "#6b5645",
-        border: "#e3d2ac",
-        rust: "#b5451e",
-        rustdark: "#8c3313",
-        gold: "#d9a227",
-        olive: "#74712e",
-        error: "#a62b1f",
+        paper: "#F4ECD8",
+        paperdark: "#1E1A14",
+        cardbg: "#FBF6EA",
+        cardbgdark: "#2A251D",
+        ink: "#2E2419",
+        inkdark: "#EDE4D3",
+        inksoft: "#6B5E4C",
+        inksoftdark: "#B8A98C",
+        border: "#D8C9A3",
+        borderdark: "#45392A",
+        rust: "#C4654A",
+        rustdark: "#8F4530",
+        gold: "#B08A3E",
+        olive: "#7D8C5C",
+        error: "#A33B2B",
       },
       fontFamily: {
-        // These replace Tailwind's default font stacks entirely (see
-        // index.css @layer base) — no default Tailwind or browser font
-        // is left active anywhere on the site.
-        heading: ["Georgia", "Times New Roman", "serif"],
-        body: ["Trebuchet MS", "Segoe UI", "Verdana", "sans-serif"],
-      },
-      borderRadius: {
-        DEFAULT: "8px",
+        heading: ["Georgia", "Cambria", "Times New Roman", "serif"],
+        body: ["Trebuchet MS", "Segoe UI", "sans-serif"],
       },
     },
   },

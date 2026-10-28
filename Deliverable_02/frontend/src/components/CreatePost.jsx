@@ -1,77 +1,92 @@
 import { useState } from "react";
+import DropZone from "./DropZone.jsx";
+import { createPost } from "../api.js";
 
-function CreatePost({ onCreate }) {
-  const [formData, setFormData] = useState({
-    bookTitle: "",
-    author: "",
-    description: "",
-    hashtags: "",
-  });
+export default function CreatePost({ onCreated }) {
+  const [description, setDescription] = useState("");
+  const [hashtags, setHashtags] = useState("");
+  const [file, setFile] = useState(null);
+  const [preview, setPreview] = useState(null);
   const [error, setError] = useState("");
+  const [pending, setPending] = useState(false);
+  const [open, setOpen] = useState(false);
 
-  function handleChange(e) {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  function handleFile(f) {
+    setFile(f);
+    setPreview(URL.createObjectURL(f));
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (!description.trim()) {
+      setError("Description is required.");
+      return;
+    }
+    setPending(true);
     setError("");
     try {
-      await onCreate({
-        ...formData,
-        hashtags: formData.hashtags.split(" ").filter(Boolean),
-        coverImage: "https://placehold.co/300x400?text=No+Cover",
-      });
-      setFormData({ bookTitle: "", author: "", description: "", hashtags: "" });
+      const formData = new FormData();
+      formData.append("description", description.trim());
+      formData.append("hashtags", hashtags);
+      if (file) formData.append("image", file);
+      const data = await createPost(formData);
+      onCreated?.(data.post);
+      setDescription("");
+      setHashtags("");
+      setFile(null);
+      setPreview(null);
+      setOpen(false);
     } catch (err) {
       setError(err.message);
+    } finally {
+      setPending(false);
     }
   }
 
+  if (!open) {
+    return (
+      <button className="btn-primary w-full mb-6" onClick={() => setOpen(true)}>
+        + Share a book post
+      </button>
+    );
+  }
+
   return (
-    <form onSubmit={handleSubmit} className="create-post-form">
+    <form onSubmit={handleSubmit} className="card mb-6 space-y-3" noValidate>
+      <h3 className="font-heading text-lg">New post</h3>
+      <div>
+        <label htmlFor="post-description" className="label">Description</label>
+        <textarea
+          id="post-description"
+          className="input-field"
+          rows={3}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        />
+      </div>
+      <div>
+        <label htmlFor="post-hashtags" className="label">Hashtags (comma separated)</label>
+        <input
+          id="post-hashtags"
+          className="input-field"
+          placeholder="scifi, dune, bookclub"
+          value={hashtags}
+          onChange={(e) => setHashtags(e.target.value)}
+        />
+      </div>
+      <div>
+        <label className="label">Cover image</label>
+        <DropZone onFile={handleFile} preview={preview} />
+      </div>
       {error && <p className="error-text">{error}</p>}
-
-      <label htmlFor="bookTitle">Book title</label>
-      <input
-        id="bookTitle"
-        name="bookTitle"
-        value={formData.bookTitle}
-        onChange={handleChange}
-        required
-      />
-
-      <label htmlFor="author">Author</label>
-      <input
-        id="author"
-        name="author"
-        value={formData.author}
-        onChange={handleChange}
-        required
-      />
-
-      <label htmlFor="description">Description</label>
-      <textarea
-        id="description"
-        name="description"
-        value={formData.description}
-        onChange={handleChange}
-      />
-
-      <label htmlFor="hashtags">
-        Hashtags (space-separated, e.g. #ilovereading #nature)
-      </label>
-      <input
-        id="hashtags"
-        name="hashtags"
-        value={formData.hashtags}
-        onChange={handleChange}
-      />
-
-      <button type="submit">Post</button>
+      <div className="flex gap-2">
+        <button type="submit" className="btn-primary" disabled={pending}>
+          {pending ? "Posting..." : "Post"}
+        </button>
+        <button type="button" className="btn-secondary" onClick={() => setOpen(false)}>
+          Cancel
+        </button>
+      </div>
     </form>
   );
 }
-
-export default CreatePost;

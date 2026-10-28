@@ -1,72 +1,128 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import LoginForm from "../components/Login";
-import SignupForm from "../components/SignupForm";
-import { signIn, signUp, setCurrentUser } from "../api";
+import LoginForm from "../components/LoginForm.jsx";
+import SignupForm from "../components/SignupForm.jsx";
+import { signIn, signUp } from "../api.js";
+import { useAuth } from "../context/AuthContext.jsx";
 
-function Splash() {
-  const [activeTab, setActiveTab] = useState("login");
-  const [serverError, setServerError] = useState("");
+// Bonus: parallax scrolling effect on the splash/landing page. Three
+// background layers (sky, hills, books) move at different rates as
+// the page scrolls, giving a sense of depth.
+function useParallax() {
+  const [scrollY, setScrollY] = useState(0);
+  useEffect(() => {
+    function onScroll() {
+      setScrollY(window.scrollY);
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+  return scrollY;
+}
+
+export default function Splash() {
+  const [mode, setMode] = useState("login");
+  const [error, setError] = useState("");
+  const [pending, setPending] = useState(false);
+  const { setUser, user } = useAuth();
   const navigate = useNavigate();
+  const scrollY = useParallax();
+  const formRef = useRef(null);
 
-  async function handleLogin(formData) {
-    setServerError("");
+  useEffect(() => {
+    if (user) navigate("/home");
+  }, [user, navigate]);
+
+  async function handleLogin(fields) {
+    setError("");
+    setPending(true);
     try {
-      const data = await signIn(formData.email, formData.password);
-      setCurrentUser(data.user);
+      const data = await signIn(fields);
+      setUser(data.user);
       navigate("/home");
     } catch (err) {
-      setServerError(err.message);
+      setError(err.message);
+    } finally {
+      setPending(false);
     }
   }
 
-  async function handleSignup(formData) {
-    setServerError("");
+  async function handleSignup(fields) {
+    setError("");
+    setPending(true);
     try {
-      const data = await signUp({
-        username: formData.username,
-        name: formData.username,
-        email: formData.email,
-        password: formData.password,
-      });
-      setCurrentUser(data.user);
+      const data = await signUp(fields);
+      setUser(data.user);
       navigate("/home");
     } catch (err) {
-      setServerError(err.message);
+      setError(err.message);
+    } finally {
+      setPending(false);
     }
   }
 
   return (
-    <div className="splash-page">
-      <h1>Dog-Eared</h1>
-      <p>Share the books on your nightstand.</p>
-
-      <div className="auth-card">
-        <div className="tabs">
-          <button
-            className={activeTab === "login" ? "active" : ""}
-            onClick={() => setActiveTab("login")}
-          >
-            Log in
-          </button>
-          <button
-            className={activeTab === "signup" ? "active" : ""}
-            onClick={() => setActiveTab("signup")}
-          >
-            Sign up
-          </button>
+    <div className="relative overflow-x-hidden">
+      <div className="relative h-[70vh] min-h-[480px] overflow-hidden flex items-center justify-center text-center">
+        <div
+          className="absolute inset-0 bg-gradient-to-b from-rust/30 via-paper to-paper dark:from-rustdark/40 dark:via-paperdark dark:to-paperdark"
+          style={{ transform: `translateY(${scrollY * 0.2}px)` }}
+        />
+        <div
+          className="absolute inset-0 flex items-end justify-center opacity-40 text-[14rem] leading-none select-none"
+          style={{ transform: `translateY(${scrollY * 0.4}px)` }}
+          aria-hidden="true"
+        >
+          📚
+        </div>
+        <div
+          className="absolute inset-0 flex items-start justify-center pt-10 text-6xl select-none opacity-70"
+          style={{ transform: `translateY(${scrollY * 0.6}px)` }}
+          aria-hidden="true"
+        >
+          🍂 ☕ 🕯️
         </div>
 
-        {serverError && <p className="error-text">{serverError}</p>}
+        <div className="relative z-10 px-6">
+          <h1 className="text-5xl font-heading font-bold text-rust dark:text-rust mb-4">
+            Dog-Eared
+          </h1>
+          <p className="max-w-xl mx-auto text-lg text-ink dark:text-inkdark mb-6">
+            A cozy corner of the internet for people who photograph their bookshelves,
+            swap recommendations, and keep a record of every book that's left a mark.
+          </p>
+          <button
+            className="btn-primary"
+            onClick={() => formRef.current?.scrollIntoView({ behavior: "smooth" })}
+          >
+            Join the shelf ↓
+          </button>
+        </div>
+      </div>
 
-        {activeTab === "login" ? (
-          <LoginForm onLogin={handleLogin} />
-        ) : (
-          <SignupForm onSignup={handleSignup} />
-        )}
+      <div ref={formRef} className="max-w-md mx-auto px-4 pb-16 pt-4">
+        <div className="card">
+          <div className="flex mb-4 border-b border-border dark:border-borderdark">
+            <button
+              className={`flex-1 py-2 font-semibold ${mode === "login" ? "text-rust border-b-2 border-rust" : "text-inksoft dark:text-inksoftdark"}`}
+              onClick={() => setMode("login")}
+            >
+              Log in
+            </button>
+            <button
+              className={`flex-1 py-2 font-semibold ${mode === "signup" ? "text-rust border-b-2 border-rust" : "text-inksoft dark:text-inksoftdark"}`}
+              onClick={() => setMode("signup")}
+            >
+              Register
+            </button>
+          </div>
+          {mode === "login" ? (
+            <LoginForm onSubmit={handleLogin} error={error} pending={pending} />
+          ) : (
+            <SignupForm onSubmit={handleSignup} error={error} pending={pending} />
+          )}
+        </div>
       </div>
     </div>
   );
 }
-
-export default Splash;

@@ -1,11 +1,11 @@
-import ProfilePreview from "./ProfilePreview";
+import { Link } from "react-router-dom";
+import Avatar from "./Avatar.jsx";
 
-function Friend({ friend }) {
+export default function Friend({ user }) {
   return (
-    <div className="friend-item">
-      <ProfilePreview user={friend} />
-    </div>
+    <Link to={`/profile/${user._id}`} className="flex items-center gap-2 card hover:border-rust">
+      <Avatar user={user} size={8} />
+      <span>{user.username}</span>
+    </Link>
   );
 }
-
-export default Friend;

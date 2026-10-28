@@ -1,50 +1,32 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
+import { imageUrl } from "../api.js";
+import Hashtags from "./Hashtags.jsx";
 
-// A post reported more than twice is hidden from feeds by default, with a
-// way to reveal it — per the main spec's "reported posts" requirement.
-const REPORT_HIDE_THRESHOLD = 2;
-
-function PostPreview({ post }) {
-  const [revealed, setRevealed] = useState(false);
-
-  const isHidden = (post.reports?.length || 0) > REPORT_HIDE_THRESHOLD && !revealed;
-
-  if (isHidden) {
-    return (
-      <article className="post-preview post-preview-hidden">
-        <p>This post has been reported multiple times and is hidden.</p>
-        <button onClick={() => setRevealed(true)}>View anyway</button>
-      </article>
-    );
-  }
-
+export default function PostPreview({ post, author }) {
   return (
-    <article className="post-preview">
+    <div className="card">
+      <div className="flex items-center justify-between mb-2">
+        {author && (
+          <Link to={`/profile/${author._id}`} className="font-semibold text-ink dark:text-inkdark hover:text-rust">
+            {author.username}
+          </Link>
+        )}
+        <span className="text-xs text-inksoft dark:text-inksoftdark">
+          {new Date(post.createdAt).toLocaleDateString()}
+        </span>
+      </div>
       <Link to={`/post/${post._id}`}>
         <img
-          src={post.coverImage || "https://placehold.co/300x400?text=No+Cover"}
-          alt={post.bookTitle}
+          src={imageUrl(post.image) || "https://picsum.photos/seed/placeholder/600/400"}
+          alt=""
+          className="w-full h-48 object-cover rounded-lg mb-2"
         />
+        <p className="line-clamp-3">{post.description}</p>
       </Link>
-      <div>
-        <p>
-          <Link to={`/profile/${post.userId}`}>
-            <strong>{post.username}</strong>
-          </Link>{" "}
-          finished reading{" "}
-          <Link to={`/post/${post._id}`}>{post.bookTitle}</Link>
-        </p>
-        <p>{post.description}</p>
-        <div>
-          {(post.hashtags || []).map((tag) => (
-            <span key={tag}>{tag}</span>
-          ))}
-        </div>
-        <p>{post.comments?.length || 0} comments</p>
+      <Hashtags tags={post.hashtags} />
+      <div className="text-xs text-inksoft dark:text-inksoftdark mt-2">
+        {post.comments?.length || 0} comment{post.comments?.length === 1 ? "" : "s"}
       </div>
-    </article>
+    </div>
   );
 }
-
-export default PostPreview;

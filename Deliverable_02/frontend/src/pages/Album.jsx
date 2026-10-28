@@ -1,153 +1,214 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import EditAlbum from "../components/EditAlbum";
-import UserPosts from "../components/UserPosts";
+import { useEffect, useState } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   getAlbum,
-  getPost,
   updateAlbum,
   deleteAlbum,
-  addPostToAlbum,
   removePostFromAlbum,
-  getPostsByUser,
-  getCurrentUser,
-} from "../api";
+  addPostToAlbum,
+  getFeed,
+} from "../api.js";
+import { useAuth } from "../context/AuthContext.jsx";
+import PostPreview from "../components/PostPreview.jsx";
+import Hashtags from "../components/Hashtags.jsx";
 
-function Album() {
+export default function Album() {
   const { id } = useParams();
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const currentUser = getCurrentUser();
 
   const [album, setAlbum] = useState(null);
-  const [albumPosts, setAlbumPosts] = useState([]);
-  const [ownerPosts, setOwnerPosts] = useState([]);
-  const [selectedPostId, setSelectedPostId] = useState("");
-  const [isEditing, setIsEditing] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(false);
+  const [fields, setFields] = useState({ name: "", description: "", hashtags: "" });
   const [error, setError] = useState("");
-
-  async function loadAlbum() {
-    setLoading(true);
-    setError("");
-    try {
-      const fetchedAlbum = await getAlbum(id);
-      setAlbum(fetchedAlbum);
-
-      const posts = await Promise.all(fetchedAlbum.postIds.map((pid) => getPost(pid)));
-      setAlbumPosts(posts);
-
-      if (currentUser && fetchedAlbum.userId === currentUser._id) {
-        const myPosts = await getPostsByUser(currentUser._id);
-        setOwnerPosts(myPosts);
-      }
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const [loading, setLoading] = useState(true);
+  const [myPosts, setMyPosts] = useState([]);
+  const [selectedPostId, setSelectedPostId] = useState("");
 
   useEffect(() => {
-    loadAlbum();
-    setIsEditing(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    let active = true;
+    setLoading(true);
+    getAlbum(id)
+      .then((data) => {
+        if (!active) return;
+        setAlbum(data.album);
+        setFields({
+          name: data.album.name,
+          description: data.album.description || "",
+          hashtags: (data.album.hashtags || []).join(", "),
+        });
+      })
+      .catch((err) => active && setError(err.message))
+      .finally(() => active && setLoading(false));
+    return () => {
+      active = false;
+    };
   }, [id]);
 
-  async function handleSave(updatedFields) {
-    const updated = await updateAlbum(id, updatedFields);
-    setAlbum(updated);
-    setIsEditing(false);
-  }
+  const isOwner = user && album && album.userId?.toString() === user._id;
 
-  async function handleDelete() {
-    if (!window.confirm(`Delete album "${album.name}"? Posts inside it won't be deleted.`))
-      return;
-    await deleteAlbum(id);
-    navigate(`/profile/me`);
-  }
-
-  async function handleAddPost(e) {
-    e.preventDefault();
-    if (!selectedPostId) return;
-    await addPostToAlbum(id, selectedPostId);
-    setSelectedPostId("");
-    loadAlbum();
-  }
-
-  async function handleRemovePost(postId) {
-    await removePostFromAlbum(id, postId);
-    loadAlbum();
-  }
+  useEffect(() => {
+    if (isOwner) {
+      getFeed({ scope: "local" }).then((data) =>
+        setMyPosts(data.posts.filter((p) => (p.userId?.toString?.() || p.userId) === user._id))
+      ).catch(() => {});
+    }
+  }, [isOwner, user]);
 
   if (loading) return <p>Loading album...</p>;
   if (error) return <p className="error-text">{error}</p>;
-  if (!album) return null;
+  if (!album) return <p>Album not found.</p>;
 
-  const isOwner = Boolean(currentUser) && album.userId === currentUser._id;
+  async function handleSave(e) {
+    e.preventDefault();
+    try {
+      const data = await updateAlbum(album._id, fields);
+      setAlbum((a) => ({ ...a, ...data.album }));
+      setEditing(false);
+    } catch (err) {
+      setError(err.message);
+    }
+  }
 
-  // Posts the owner has that aren't already in this album — candidates to add
-  const addablePosts = ownerPosts.filter(
-    (post) => !album.postIds.includes(post._id)
+  async function handleDelete() {
+    if (!window.confirm("Delete this album? Posts inside it will not be deleted.")) return;
+    try {
+      await deleteAlbum(album._id);
+      navigate(`/profile/${user._id}`);
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function handleAddPost() {
+    if (!selectedPostId) return;
+    try {
+      await addPostToAlbum(album._id, selectedPostId);
+      const refreshed = await getAlbum(album._id);
+      setAlbum(refreshed.album);
+      setSelectedPostId("");
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function handleRemovePost(postId) {
+    try {
+      await removePostFromAlbum(album._id, postId);
+      setAlbum((a) => ({
+        ...a,
+        posts: a.posts.filter((p) => p._id !== postId),
+        postIds: a.postIds.filter((pid) => (pid.toString?.() || pid) !== postId),
+      }));
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  const availablePosts = myPosts.filter(
+    (p) => !album.postIds?.some((pid) => (pid.toString?.() || pid) === p._id)
   );
 
   return (
-    <div>
-      {isEditing ? (
-        <EditAlbum album={album} onSave={handleSave} onCancel={() => setIsEditing(false)} />
-      ) : (
-        <div className="album-header">
-          <h1>{album.name}</h1>
-          <p>{album.description}</p>
-          <div>
-            {(album.hashtags || []).map((tag) => (
-              <span key={tag}>{tag}</span>
-            ))}
+    <div className="max-w-3xl mx-auto">
+      <div className="card mb-4">
+        {editing ? (
+          <form onSubmit={handleSave} className="space-y-3" noValidate>
+            <div>
+              <label htmlFor="album-edit-name" className="label">Name</label>
+              <input
+                id="album-edit-name"
+                className="input-field"
+                value={fields.name}
+                onChange={(e) => setFields((f) => ({ ...f, name: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label htmlFor="album-edit-description" className="label">Description</label>
+              <textarea
+                id="album-edit-description"
+                className="input-field"
+                rows={2}
+                value={fields.description}
+                onChange={(e) => setFields((f) => ({ ...f, description: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label htmlFor="album-edit-hashtags" className="label">Hashtags</label>
+              <input
+                id="album-edit-hashtags"
+                className="input-field"
+                value={fields.hashtags}
+                onChange={(e) => setFields((f) => ({ ...f, hashtags: e.target.value }))}
+              />
+            </div>
+            <div className="flex gap-2">
+              <button type="submit" className="btn-primary">Save</button>
+              <button type="button" className="btn-secondary" onClick={() => setEditing(false)}>Cancel</button>
+            </div>
+          </form>
+        ) : (
+          <>
+            <div className="flex justify-between items-start">
+              <div>
+                <h1 className="text-2xl font-heading font-bold">{album.name}</h1>
+                {album.author && (
+                  <Link to={`/profile/${album.author._id}`} className="text-sm text-inksoft dark:text-inksoftdark">
+                    by {album.author.username}
+                  </Link>
+                )}
+              </div>
+              {isOwner && (
+                <div className="flex gap-2">
+                  <button className="btn-secondary text-sm" onClick={() => setEditing(true)}>Edit</button>
+                  <button className="btn-danger text-sm" onClick={handleDelete}>Delete</button>
+                </div>
+              )}
+            </div>
+            <p className="mt-2">{album.description}</p>
+            <Hashtags tags={album.hashtags} />
+          </>
+        )}
+      </div>
+
+      {isOwner && (
+        <div className="card mb-4 flex gap-2 flex-wrap items-end">
+          <div className="flex-1 min-w-[200px]">
+            <label htmlFor="add-post-select" className="label">Add one of your posts to this album</label>
+            <select
+              id="add-post-select"
+              className="input-field"
+              value={selectedPostId}
+              onChange={(e) => setSelectedPostId(e.target.value)}
+            >
+              <option value="">Choose a post...</option>
+              {availablePosts.map((p) => (
+                <option key={p._id} value={p._id}>{p.description.slice(0, 50)}</option>
+              ))}
+            </select>
           </div>
+          <button className="btn-primary" onClick={handleAddPost} disabled={!selectedPostId}>Add</button>
         </div>
       )}
 
-      {isOwner && !isEditing && (
-        <div className="owner-actions">
-          <button onClick={() => setIsEditing(true)}>Edit album</button>
-          <button onClick={handleDelete}>Delete album</button>
-        </div>
-      )}
-
-      {isOwner && addablePosts.length > 0 && (
-        <form onSubmit={handleAddPost} className="add-to-album-form">
-          <label htmlFor="add-post-select">Add one of your posts to this album</label>
-          <select
-            id="add-post-select"
-            value={selectedPostId}
-            onChange={(e) => setSelectedPostId(e.target.value)}
-          >
-            <option value="">Choose a post...</option>
-            {addablePosts.map((post) => (
-              <option key={post._id} value={post._id}>
-                {post.bookTitle}
-              </option>
-            ))}
-          </select>
-          <button type="submit">Add to album</button>
-        </form>
-      )}
-
-      <h2>Books in this album</h2>
-      {albumPosts.length === 0 ? (
-        <p>No books in this album yet.</p>
-      ) : (
-        <>
-          <UserPosts posts={albumPosts} />
-          {isOwner &&
-            albumPosts.map((post) => (
-              <button key={post._id} onClick={() => handleRemovePost(post._id)}>
-                Remove "{post.bookTitle}" from album
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {(album.posts || []).map((post) => (
+          <div key={post._id} className="relative">
+            <PostPreview post={post} author={album.author} />
+            {isOwner && (
+              <button
+                className="absolute top-2 right-2 btn-danger text-xs px-2 py-1"
+                onClick={() => handleRemovePost(post._id)}
+              >
+                Remove
               </button>
-            ))}
-        </>
-      )}
+            )}
+          </div>
+        ))}
+        {(album.posts || []).length === 0 && (
+          <p className="text-sm text-inksoft dark:text-inksoftdark">No posts in this album yet.</p>
+        )}
+      </div>
     </div>
   );
 }
-
-export default Album;

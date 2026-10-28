@@ -1,191 +1,229 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import ProfileInfo from "../components/ProfileInfo";
-import EditProfile from "../components/EditProfile";
-import CreatePost from "../components/CreatePost";
-import UserPosts from "../components/UserPosts";
-import Friend from "../components/Friend";
-import AlbumPreview from "../components/AlbumPreview";
-import CreateAlbum from "../components/CreateAlbum";
 import {
   getUser,
-  updateUserProfile,
+  deleteAccount,
   addFriend,
   removeFriend,
-  deleteAccount,
-  getPostsByUser,
-  createPost,
-  getAlbumsByUser,
-  createAlbum,
-  getCurrentUser,
-  setCurrentUser,
-  clearCurrentUser,
-} from "../api";
+  toggleFavorite,
+  requestVerification,
+} from "../api.js";
+import { useAuth } from "../context/AuthContext.jsx";
+import Avatar from "../components/Avatar.jsx";
+import EditProfile from "../components/EditProfile.jsx";
+import Friend from "../components/Friend.jsx";
+import PostPreview from "../components/PostPreview.jsx";
+import AlbumPreview from "../components/AlbumPreview.jsx";
+import CreateAlbum from "../components/CreateAlbum.jsx";
 
-function Profile() {
+export default function Profile() {
   const { id } = useParams();
+  const { user: me, setUser: setMe } = useAuth();
   const navigate = useNavigate();
 
-  const [currentUser, setCurrentUserState] = useState(getCurrentUser());
-  const [user, setUser] = useState(null);
-  const [friendsList, setFriendsList] = useState([]);
-  const [posts, setPosts] = useState([]);
-  const [albums, setAlbums] = useState([]);
-  const [isEditing, setIsEditing] = useState(false);
-  const [isCreatingPost, setIsCreatingPost] = useState(false);
-  const [isCreatingAlbum, setIsCreatingAlbum] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState(null);
+  const [editing, setEditing] = useState(false);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  // "/profile/me" resolves to whoever's actually logged in
-  const profileId = id === "me" ? currentUser?._id : id;
-  const isOwner = Boolean(currentUser) && profileId === currentUser._id;
-  const isFriend =
-    Boolean(currentUser) && !isOwner && currentUser.friends.includes(profileId);
+  const targetId = id === "me" ? me?._id : id;
 
   useEffect(() => {
-    if (!profileId) return;
-
+    let active = true;
     setLoading(true);
-    setError("");
-    setIsEditing(false);
-    setIsCreatingPost(false);
-    setIsCreatingAlbum(false);
-
-    getUser(profileId)
-      .then((fetchedUser) => {
-        setUser(fetchedUser);
-        return Promise.all(fetchedUser.friends.map((fid) => getUser(fid)));
+    getUser(targetId)
+      .then((res) => {
+        if (!active) return;
+        setData(res);
       })
-      .then((friendsData) => setFriendsList(friendsData))
-      .then(() => getPostsByUser(profileId))
-      .then((fetchedPosts) => setPosts(fetchedPosts))
-      .then(() => getAlbumsByUser(profileId))
-      .then((fetchedAlbums) => setAlbums(fetchedAlbums))
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, [profileId]);
-
-  function syncCurrentUser(updatedUser) {
-    setCurrentUserState(updatedUser);
-    setCurrentUser(updatedUser);
-  }
-
-  async function handleSave(updatedFields) {
-    const updated = await updateUserProfile(profileId, updatedFields);
-    setUser(updated);
-    if (isOwner) syncCurrentUser(updated);
-    setIsEditing(false);
-  }
-
-  async function handleCreatePost(newPostData) {
-    const created = await createPost({
-      ...newPostData,
-      userId: currentUser._id,
-      username: currentUser.username,
-    });
-    setPosts((prev) => [created, ...prev]);
-    setIsCreatingPost(false);
-  }
-
-  async function handleCreateAlbum(newAlbumData) {
-    const created = await createAlbum({
-      ...newAlbumData,
-      userId: currentUser._id,
-      username: currentUser.username,
-    });
-    setAlbums((prev) => [created, ...prev]);
-    setIsCreatingAlbum(false);
-  }
-
-  async function handleAddFriend() {
-    await addFriend(currentUser._id, profileId);
-    const refreshedCurrent = await getUser(currentUser._id);
-    syncCurrentUser(refreshedCurrent);
-    setUser(await getUser(profileId));
-  }
-
-  async function handleRemoveFriend() {
-    await removeFriend(currentUser._id, profileId);
-    const refreshedCurrent = await getUser(currentUser._id);
-    syncCurrentUser(refreshedCurrent);
-    setUser(await getUser(profileId));
-  }
-
-  async function handleDeleteAccount() {
-    if (!window.confirm("Delete your account? This can't be undone.")) return;
-    await deleteAccount(currentUser._id);
-    clearCurrentUser();
-    navigate("/");
-  }
+      .catch((err) => active && setError(err.message))
+      .finally(() => active && setLoading(false));
+    return () => {
+      active = false;
+    };
+  }, [targetId]);
 
   if (loading) return <p>Loading profile...</p>;
   if (error) return <p className="error-text">{error}</p>;
-  if (!user) return null;
+  if (!data) return <p>Profile not found.</p>;
 
-  // Not friends and not your own profile: name + picture only, per spec
-  if (!isOwner && !isFriend) {
-    return (
-      <div className="profile-info">
-        <img src={user.profilePic} alt={user.name} />
-        <div>
-          <h1>{user.name}</h1>
-          <p>@{user.username}</p>
-          <button onClick={handleAddFriend}>Add friend</button>
-        </div>
-      </div>
-    );
+  const { user, posts, albums, relationship } = data;
+  const isSelf = relationship === "self";
+  const isFriend = relationship === "friend";
+  const isStranger = relationship === "stranger";
+  // Whether the signed-in viewer (not necessarily "user" on this page) is
+  // already friends with the profile being viewed.
+  const alreadyFriends = me?.friends?.some((f) => (f.toString?.() || f) === user._id);
+  const isFavorite = me?.favorites?.some((f) => (f.toString?.() || f) === user._id);
+
+  async function handleFriendToggle() {
+    try {
+      if (alreadyFriends) {
+        await removeFriend(user._id);
+        setMe((u) => ({ ...u, friends: (u.friends || []).filter((f) => (f.toString?.() || f) !== user._id) }));
+      } else {
+        await addFriend(user._id);
+        setMe((u) => ({ ...u, friends: [...(u.friends || []), user._id] }));
+      }
+      const res = await getUser(targetId);
+      setData(res);
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function handleFavorite() {
+    try {
+      const result = await toggleFavorite(user._id);
+      setMe((u) => {
+        const favorites = result.favorited
+          ? [...(u.favorites || []), user._id]
+          : (u.favorites || []).filter((f) => (f.toString?.() || f) !== user._id);
+        return { ...u, favorites };
+      });
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function handleDelete() {
+    if (!window.confirm("Delete your account? This cannot be undone.")) return;
+    try {
+      await deleteAccount(user._id);
+      setMe(null);
+      navigate("/");
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function handleVerifyRequest() {
+    try {
+      await requestVerification();
+      setMe((u) => ({ ...u, verificationRequested: true }));
+    } catch (err) {
+      setError(err.message);
+    }
   }
 
   return (
     <div>
-      {isEditing ? (
-        <EditProfile user={user} onSave={handleSave} onCancel={() => setIsEditing(false)} />
-      ) : (
-        <ProfileInfo user={user} isOwner={isOwner} onEditClick={() => setIsEditing(true)} />
-      )}
+      <div className="card mb-6">
+        <div className="flex items-start gap-4 flex-wrap">
+          <Avatar user={user} size={20} />
+          <div className="flex-1">
+            <h1 className="text-2xl font-heading font-bold flex items-center gap-2">
+              {user.username}
+              {user.isVerified && <span title="Verified" className="text-gold">✔</span>}
+            </h1>
+            {!isStranger && <p className="text-inksoft dark:text-inksoftdark mt-1">{user.bio}</p>}
 
-      {isOwner && <button onClick={handleDeleteAccount}>Delete my account</button>}
-      {!isOwner && isFriend && <button onClick={handleRemoveFriend}>Unfriend</button>}
-
-      <h2>Friends</h2>
-      {friendsList.length === 0 ? (
-        <p>No friends to show.</p>
-      ) : (
-        friendsList.map((friend) => <Friend key={friend._id} friend={friend} />)
-      )}
-
-      <h2>Posts</h2>
-      {isOwner && (
-        <>
-          <button onClick={() => setIsCreatingPost((prev) => !prev)}>
-            {isCreatingPost ? "Cancel" : "New post"}
-          </button>
-          {isCreatingPost && <CreatePost onCreate={handleCreatePost} />}
-        </>
-      )}
-      <UserPosts posts={posts} />
-
-      <h2>Reading lists</h2>
-      {isOwner && (
-        <>
-          <button onClick={() => setIsCreatingAlbum((prev) => !prev)}>
-            {isCreatingAlbum ? "Cancel" : "New album"}
-          </button>
-          {isCreatingAlbum && <CreateAlbum onCreate={handleCreateAlbum} />}
-        </>
-      )}
-      {albums.length === 0 ? (
-        <p>No reading lists yet.</p>
-      ) : (
-        <div className="album-grid">
-          {albums.map((album) => (
-            <AlbumPreview key={album._id} album={album} />
-          ))}
+            <div className="flex flex-wrap gap-2 mt-3">
+              {isSelf && (
+                <>
+                  <button className="btn-secondary text-sm" onClick={() => setEditing((e) => !e)}>
+                    {editing ? "Close editor" : "Edit profile"}
+                  </button>
+                  {!user.isVerified && !me?.verificationRequested && (
+                    <button className="btn-secondary text-sm" onClick={handleVerifyRequest}>
+                      Request verification
+                    </button>
+                  )}
+                  {me?.verificationRequested && (
+                    <span className="text-sm text-inksoft dark:text-inksoftdark self-center">
+                      Verification pending admin review
+                    </span>
+                  )}
+                  <button className="btn-danger text-sm" onClick={handleDelete}>Delete account</button>
+                </>
+              )}
+              {!isSelf && !isStranger && (
+                <>
+                  <button className="btn-secondary text-sm" onClick={handleFriendToggle}>
+                    {alreadyFriends ? "Remove friend" : "Add friend"}
+                  </button>
+                  <button className="btn-secondary text-sm" onClick={handleFavorite}>
+                    {isFavorite ? "★ Favorited" : "☆ Favorite"}
+                  </button>
+                </>
+              )}
+              {isStranger && (
+                <button className="btn-secondary text-sm" onClick={handleFriendToggle}>
+                  {alreadyFriends ? "Request sent" : "Send friend request"}
+                </button>
+              )}
+            </div>
+          </div>
         </div>
+
+        {editing && (
+          <div className="mt-4">
+            <EditProfile
+              user={user}
+              onCancel={() => setEditing(false)}
+              onSaved={(updated) => {
+                setMe(updated);
+                setData((d) => ({ ...d, user: updated }));
+                setEditing(false);
+              }}
+            />
+          </div>
+        )}
+      </div>
+
+      {isStranger ? (
+        <p className="text-inksoft dark:text-inksoftdark">
+          Add {user.username} as a friend to see their posts, albums, and friend list.
+        </p>
+      ) : (
+        <>
+          {(isSelf || isFriend) && (
+            <section className="mb-6">
+              <h2 className="font-heading text-xl mb-2">Friends</h2>
+              {data.friends?.length ? (
+                <div className="grid sm:grid-cols-3 gap-3">
+                  {data.friends.map((friend) => (
+                    <Friend key={friend._id} user={friend} />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-inksoft dark:text-inksoftdark">No friends yet.</p>
+              )}
+            </section>
+          )}
+
+          <section className="mb-6">
+            <div className="flex justify-between items-center mb-2">
+              <h2 className="font-heading text-xl">Albums</h2>
+            </div>
+            {isSelf && (
+              <CreateAlbum onCreated={(album) => setData((d) => ({ ...d, albums: [album, ...d.albums] }))} />
+            )}
+            {albums?.length ? (
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {albums.map((album) => (
+                  <AlbumPreview key={album._id} album={album} />
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-inksoft dark:text-inksoftdark">No albums yet.</p>
+            )}
+          </section>
+
+          <section>
+            <h2 className="font-heading text-xl mb-2">Posts</h2>
+            {posts?.length ? (
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {posts.map((post) => (
+                  <PostPreview key={post._id} post={post} author={user} />
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-inksoft dark:text-inksoftdark">No posts yet.</p>
+            )}
+          </section>
+        </>
       )}
     </div>
   );
 }
-
-export default Profile;

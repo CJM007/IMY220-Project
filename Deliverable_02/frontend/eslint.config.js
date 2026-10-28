@@ -28,10 +28,6 @@ export default [
         { allowConstantExport: true },
       ],
       "no-unused-vars": ["warn", { varsIgnorePattern: "^[A-Z_]" }],
-      // The standard "setLoading(true) at the top of a data-fetching effect"
-      // pattern used throughout this project's pages trips this newer rule.
-      // It's a performance nitpick, not a bug — downgraded to a warning.
-      "react-hooks/set-state-in-effect": "warn",
     },
   },
 ];

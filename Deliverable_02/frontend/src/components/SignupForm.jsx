@@ -1,111 +1,83 @@
 import { useState } from "react";
 
-function SignupForm({ onSignup }) {
-  const [formData, setFormData] = useState({
-    username: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-  });
-
+export default function SignupForm({ onSubmit, error, pending }) {
+  const [fields, setFields] = useState({ username: "", email: "", password: "", bio: "" });
   const [errors, setErrors] = useState({});
 
-  function handleChange(e) {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  }
-
   function validate() {
-    const newErrors = {};
-
-    if (!formData.username.trim()) {
-      newErrors.username = "Username is required.";
-    } else if (formData.username.length < 3) {
-      newErrors.username = "Username must be at least 3 characters.";
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = "Email is required.";
-    } else if (!formData.email.includes("@")) {
-      newErrors.email = "Enter a valid email address.";
-    }
-
-    if (!formData.password) {
-      newErrors.password = "Password is required.";
-    } else if (formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
-    }
-
-    if (formData.confirmPassword !== formData.password) {
-      newErrors.confirmPassword = "Passwords do not match.";
-    }
-    return newErrors;
+    const next = {};
+    if (!fields.username.trim()) next.username = "Username is required.";
+    if (!fields.email.trim()) next.email = "Email is required.";
+    else if (!/^\S+@\S+\.\S+$/.test(fields.email)) next.email = "Enter a valid email address.";
+    if (!fields.password) next.password = "Password is required.";
+    else if (fields.password.length < 6) next.password = "Password must be at least 6 characters.";
+    setErrors(next);
+    return Object.keys(next).length === 0;
   }
 
   function handleSubmit(e) {
     e.preventDefault();
-    const newErrors = validate();
-    setErrors(newErrors);
+    if (!validate()) return;
+    onSubmit(fields);
+  }
 
-    if (Object.keys(newErrors).length === 0) {
-      onSignup(formData);
-    }
+  function handleChange(e) {
+    setFields((f) => ({ ...f, [e.target.name]: e.target.value }));
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="auth-form">
-      <div className="field">
-        <label htmlFor="signup-username">Username</label>
+    <form onSubmit={handleSubmit} noValidate className="space-y-4" aria-label="Register">
+      <div>
+        <label htmlFor="signup-username" className="label">Username</label>
         <input
           id="signup-username"
           name="username"
-          value={formData.username}
+          type="text"
+          className="input-field"
+          value={fields.username}
           onChange={handleChange}
         />
         {errors.username && <p className="error-text">{errors.username}</p>}
       </div>
-
-      <div className="field">
-        <label htmlFor="signup-email">Email address</label>
+      <div>
+        <label htmlFor="signup-email" className="label">Email</label>
         <input
           id="signup-email"
           name="email"
           type="email"
-          value={formData.email}
+          className="input-field"
+          value={fields.email}
           onChange={handleChange}
         />
         {errors.email && <p className="error-text">{errors.email}</p>}
       </div>
-
-      <div className="field">
-        <label htmlFor="signup-password">Password</label>
+      <div>
+        <label htmlFor="signup-password" className="label">Password</label>
         <input
           id="signup-password"
           name="password"
           type="password"
-          value={formData.password}
+          className="input-field"
+          value={fields.password}
           onChange={handleChange}
         />
         {errors.password && <p className="error-text">{errors.password}</p>}
       </div>
-
-      <div className="field">
-        <label htmlFor="signup-confirm">Confirm password</label>
-        <input
-          id="signup-confirm"
-          name="confirmPassword"
-          type="password"
-          value={formData.confirmPassword}
+      <div>
+        <label htmlFor="signup-bio" className="label">Bio (optional)</label>
+        <textarea
+          id="signup-bio"
+          name="bio"
+          className="input-field"
+          rows={2}
+          value={fields.bio}
           onChange={handleChange}
         />
-        {errors.confirmPassword && (
-          <p className="error-text">{errors.confirmPassword}</p>
-        )}
       </div>
-
-      <button type="submit">Sign up</button>
+      {error && <p className="error-text">{error}</p>}
+      <button type="submit" className="btn-primary w-full" disabled={pending}>
+        {pending ? "Creating account..." : "Create account"}
+      </button>
     </form>
   );
 }
-
-export default SignupForm;
