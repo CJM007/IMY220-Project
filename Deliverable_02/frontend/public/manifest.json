@@ -1,0 +1,9 @@
+{
+  "short_name": "Into the Unknown",
+  "name": "Into the Unknown | Chitambala Sikazwe",
+  "icons": [{ "src": "favicon.svg", "type": "image/svg+xml", "sizes": "any" }],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#05070D",
+  "background_color": "#05070D"
+}

@@ -1,0 +1,34 @@
+:root {
+  --void: #05070d;
+  --navy: #0b1330;
+  --console: #0e1638;
+  --white: #f4f6ff;
+  --grey: #9aa5c6;
+
+  /* Each universe repaints these. */
+  --accent: #5ce1e6;
+  --pop: #ffd54a;
+  --deep: #06324a;
+
+  --font-display: 'Permanent Marker', 'Comic Sans MS', cursive;
+  --font-hand: 'Kalam', 'Segoe Print', 'Comic Sans MS', cursive;
+  --ink: #0a0d1c;
+  --paper: #f3ecd8;
+  /* Uneven corners, so boxes look cut and drawn by hand rather than stamped out */
+  --wob-a: 255px 18px 225px 18px / 18px 225px 18px 255px;
+  --wob-b: 18px 235px 18px 245px / 235px 18px 245px 18px;
+  --wob-c: 28px 14px 32px 12px / 14px 30px 12px 26px;
+  --font-body: 'Bricolage Grotesque', 'Trebuchet MS', system-ui, sans-serif;
+
+  --gutter: 3rem;
+  --bar-h: 4.25rem;
+  --rail-h: 6.4rem;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+[data-universe='launch']    { --accent: #5ce1e6; --pop: #ffd54a; --deep: #06324a; }
+[data-universe='briefing']  { --accent: #c29bff; --pop: #ff8fc8; --deep: #2a1252; }
+[data-universe='waypoints'] { --accent: #6bf2c0; --pop: #ffb84d; --deep: #073a2d; }
+[data-universe='signal']    { --accent: #ff8a4c; --pop: #ffe27a; --deep: #4a1a08; }
+[data-universe='file']      { --accent: #b7f04a; --pop: #ff7fa5; --deep: #253805; }
+[data-universe='return']    { --accent: #ffd27a; --pop: #ff8fa3; --deep: #4a2a10; }

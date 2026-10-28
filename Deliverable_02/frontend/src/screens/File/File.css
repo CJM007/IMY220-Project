@@ -1,0 +1,22 @@
+.doss { max-width: 44rem; margin: 0 auto; min-height: 100%; display: flex; flex-direction: column; justify-content: center; gap: 1.8rem; padding-bottom: 2rem; }
+.doss__kicker { font-family: var(--font-hand); font-weight: 700; font-size: 1.1rem; color: var(--pop); display: inline-block; transform: rotate(-1.5deg); }
+.doss__head h1 { font-size: clamp(2.2rem, 6vw, 4rem); line-height: 1.05; }
+.doss__wrap { position: relative; padding-top: 2.3rem; transform: rotate(-1deg); }
+.doss__tab { position: absolute; top: 0; left: 2rem; padding: 0.2rem 1.4rem 0.5rem; background: #d6c48a; border: 3px solid var(--ink); border-bottom: 0; border-radius: 12px 18px 0 0 / 14px 20px 0 0; font-family: var(--font-display); color: var(--ink); z-index: 0; }
+.dossier { color: var(--ink); z-index: 1; --r0: -0.3deg; --r1: 0.4deg; }
+.dossier__body { position: relative; padding: 1.8rem 2rem 2rem; display: flex; flex-direction: column; gap: 1.1rem; align-items: flex-start; font-family: var(--font-hand); font-size: 1.2rem; }
+.dossier__head { display: inline-flex; align-items: center; gap: 0.6rem; font-family: var(--font-display); font-size: 1.4rem; }
+.dossier__rows { margin: 0; width: 100%; display: grid; gap: 0.5rem; }
+.dossier__rows > div { display: flex; gap: 1rem; border-bottom: 2px dotted rgba(10, 13, 28, 0.4); padding-bottom: 0.3rem; }
+.dossier__rows dt { flex: none; width: 9rem; font-weight: 700; opacity: 0.7; }
+.dossier__rows dd { margin: 0; flex: 1; font-weight: 700; }
+.dossier__notes dd { display: grid; gap: 0.45rem; align-content: start; }
+.bar { display: block; height: 1.05rem; background: var(--ink); border-radius: 3px 8px 2px 7px; transform: rotate(-0.4deg); }
+.dossier__open { font-weight: 400; }
+.dossier__stamp { position: absolute; top: 1.2rem; right: 1.4rem; margin: 0; padding: 0.15rem 0.9rem; border: 4px solid #b5321f; border-radius: var(--wob-a); color: #b5321f; font-family: var(--font-display); font-size: 1.5rem; transform: rotate(9deg); opacity: 0.85; transition: opacity 0.6s, transform 0.6s; }
+.dossier__stamp.is-off { opacity: 0; transform: rotate(20deg) scale(1.6); }
+.dossier__link { width: min(24rem, 100%); animation: settle 0.7s var(--ease-out) both; }
+@keyframes settle { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.dossier .btn { --accent: #b5321f; }
+@media (max-width: 600px) { .dossier__rows > div { flex-direction: column; gap: 0; } .dossier__rows dt { width: auto; } .dossier__stamp { position: static; align-self: flex-end; } }
+.dossier .ext { color: var(--white); background: #1a1d10; }

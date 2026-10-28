@@ -1,0 +1,167 @@
+.stage { display: contents; }
+
+.layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.layer--sky { z-index: 0; }
+.layer--bodies { z-index: 2; }
+
+/* Landing in a new universe. The old one rushes past and fades while the new one grows in from far away. */
+.layer.is-arriving { animation: land 1.7s cubic-bezier(0.16, 1, 0.3, 1) 0.28s both; }
+.layer.is-leaving { animation: depart 0.95s cubic-bezier(0.5, 0, 0.9, 0.4) both; }
+
+@keyframes land {
+  from { opacity: 0; transform: scale(0.45); }
+  55% { opacity: 1; }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes depart {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(2.6); }
+}
+
+/* Sky */
+.sky__nebula,
+.sky__glows { position: absolute; inset: 0; }
+.sky__nebula {
+  background-size: 100% 100%;
+  mix-blend-mode: screen;
+}
+
+/* Bodies */
+.body {
+  position: absolute;
+  width: var(--size);
+  transform: translate3d(
+    calc(-50% + var(--px, 0) * var(--depth) * -1px),
+    calc(-50% + var(--py, 0) * var(--depth) * -1px + var(--sy, 0) * var(--depth) * -0.04px),
+    0
+  );
+}
+.body__float {
+  display: flex;
+  justify-content: center;
+  animation: bob var(--bob, 14s) ease-in-out infinite alternate;
+}
+@keyframes bob {
+  from { transform: translateY(-0.9vmin) rotate(-0.4deg); }
+  to { transform: translateY(0.9vmin) rotate(0.4deg); }
+}
+
+/* Planets */
+.planet {
+  position: relative;
+  width: var(--size);
+  aspect-ratio: 1;
+}
+.planet__halo {
+  position: absolute;
+  inset: -7%;
+  border-radius: 50%;
+  background: radial-gradient(circle closest-side, transparent 84%, var(--atmo) 88%, transparent 100%);
+  opacity: 0.55;
+}
+.planet__sphere {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  isolation: isolate;
+  box-shadow: 0 0 calc(var(--size) * 0.05) calc(var(--size) * 0.004) var(--atmo);
+}
+.planet__surface {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 200%;
+  height: 100%;
+  background-size: 50% 100%;
+  background-repeat: repeat-x;
+  animation: spin var(--spin, 260s) linear infinite;
+  will-change: transform;
+}
+@keyframes spin { to { transform: translateX(-50%); } }
+.planet__shade {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 28% 24%, rgba(255, 255, 255, 0.3), transparent 34%),
+    radial-gradient(circle at 32% 28%, transparent 38%, rgba(0, 0, 0, 0.42) 62%, rgba(0, 0, 0, 0.9) 96%);
+  box-shadow: inset calc(var(--size) * 0.012) calc(var(--size) * 0.012) calc(var(--size) * 0.03) var(--atmo);
+}
+
+.ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  overflow: visible;
+}
+.ring--back { z-index: 0; }
+.planet__halo, .planet__sphere { z-index: 1; }
+.ring--front { z-index: 2; }
+
+/* Sun */
+.sun {
+  position: relative;
+  width: var(--size);
+  aspect-ratio: 1;
+}
+.sun__glow {
+  position: absolute;
+  inset: -110%;
+  background: radial-gradient(circle closest-side, color-mix(in srgb, var(--c) 55%, transparent), color-mix(in srgb, var(--c2) 16%, transparent) 42%, transparent 100%);
+}
+.sun__rays {
+  position: absolute;
+  inset: -55%;
+  width: 210%;
+  animation: rays 90s linear infinite;
+}
+@keyframes rays { to { transform: rotate(360deg); } }
+.sun__core {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 42% 38%, #fff 0, #fff8dc 30%, var(--c) 62%, var(--c2) 100%);
+  box-shadow: 0 0 calc(var(--size) * 0.35) calc(var(--size) * 0.08) color-mix(in srgb, var(--c) 60%, transparent);
+  animation: flare 6s ease-in-out infinite alternate;
+}
+@keyframes flare { to { transform: scale(1.04); filter: brightness(1.12); } }
+
+/* Black hole */
+.bh svg { width: var(--size); height: var(--size); display: block; overflow: visible; }
+.bh__disc { animation: shimmer 4s linear infinite; }
+@keyframes shimmer { to { stroke-dashoffset: -96; } }
+.bh__signal circle {
+  stroke-width: 2.5;
+  transform-origin: center;
+  animation: signal 5.4s ease-out infinite;
+  opacity: 0;
+}
+.bh__signal circle:nth-child(2) { animation-delay: 1.8s; }
+.bh__signal circle:nth-child(3) { animation-delay: 3.6s; }
+@keyframes signal {
+  0% { opacity: 0.7; transform: scale(0.9); }
+  100% { opacity: 0; transform: scale(2.3); }
+}
+
+/* Belt, station, debris */
+.belt { width: var(--size); display: block; transform: rotate(var(--tilt)); }
+.station { width: var(--size); display: block; animation: tumble 70s linear infinite; }
+@keyframes tumble { to { transform: rotate(360deg); } }
+.debris { position: relative; width: var(--size); aspect-ratio: 1.3; }
+.debris svg { position: absolute; animation: tumble 30s linear infinite; }
+
+/* Lite mode: on weaker machines the planets hold still and the nebula is left out. */
+:root[data-lite] .planet__surface,
+:root[data-lite] .body__float,
+:root[data-lite] .sun__rays { animation: none; }
+:root[data-lite] .sky__nebula { display: none; }
+
+@media (max-width: 720px) {
+  .layer--bodies { opacity: 0.8; }
+}

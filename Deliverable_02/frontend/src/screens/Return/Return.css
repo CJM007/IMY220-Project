@@ -1,0 +1,13 @@
+.ret { max-width: 60rem; margin: 0 auto; min-height: 100%; display: flex; flex-direction: column; justify-content: center; gap: 1.4rem; padding-bottom: 2rem; }
+.ret__kicker { font-family: var(--font-hand); font-weight: 700; font-size: 1.1rem; color: var(--pop); display: inline-block; transform: rotate(-1.5deg); }
+.ret__title { font-size: clamp(2.2rem, 6vw, 4.4rem); line-height: 1.05; text-shadow: 0.05em 0.06em 0 color-mix(in srgb, var(--accent) 55%, #000); }
+.ret__lead { max-width: 40rem; font-size: 1.15rem; color: #e8e2d4; }
+.ret__lead strong { font-family: var(--font-hand); color: var(--pop); font-size: 1.2em; }
+.ret__grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 2.4rem; align-items: start; margin-top: 0.8rem; }
+.ret__cardbody { padding: 1.5rem 1.7rem 1.7rem; display: grid; gap: 0.8rem; justify-items: start; }
+.ret__cardbody h2 { font-size: 1.6rem; }
+.ret__mail { font-family: var(--font-hand); font-weight: 700; color: var(--pop); overflow-wrap: anywhere; }
+.ret__social .note { font-size: 1.15rem; margin-bottom: 0.7rem; }
+.ret__foot { display: flex; align-items: center; gap: 1.6rem; flex-wrap: wrap; margin-top: 0.8rem; }
+.ret__foot .note { color: var(--grey); }
+@media (max-width: 860px) { .ret__grid { grid-template-columns: 1fr; } }
